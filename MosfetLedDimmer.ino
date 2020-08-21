@@ -36,22 +36,114 @@
 
 //
 // program version
-const String currVersion = "v20200801";
+const String currVersion = "v20200821";
 
-const int delayFadingLoop = 2;
+const int delayFadingLoop = 24;   // 12 millisec.
 
 //
 // pin layout
-const int mosfetPin = 9;
+const int mosfetPin = 9;          // PWM pin
 
+//
+// LED manager class
+class Led {
+
+public:
+
+  Led() : ledValue_(0), fadeRising_(true) {
+    
+    analogWrite(mosfetPin, ledValue_);
+    return;
+  };
+
+  Led(const int initialLedValue) : ledValue_(initialLedValue), fadeRising_(true) {
+  
+    analogWrite(mosfetPin, ledValue_);
+    return;
+  };
+
+  void setLedValue(const int initialLedValue) {
+  
+    ledValue_ = initialLedValue;
+
+    if(ledValue_ >= ledMaxValue_) {
+        
+        ledValue_ = ledMaxValue_;
+  
+    } else if(ledValue_ <= ledMinValue_) {
+        
+        ledValue_ = ledMinValue_;
+    }
+
+    analogWrite(mosfetPin, ledValue_);
+    return;
+  };
+
+  void fadeInOut() {
+    
+    if(fadeRising_) {
+      
+      fadeIn();
+
+      if(ledValue_ >= ledMaxValue_) {
+        
+        ledValue_ = ledMaxValue_;
+        fadeRising_ = false;
+      }
+  
+    } else {
+      
+      fadeOut();
+  
+      if(ledValue_ <= ledMinValue_) {
+        
+        ledValue_ = ledMinValue_;
+        fadeRising_ = true;
+      }
+    }
+
+    return;
+  }
+
+  void fadeIn() {
+
+    ledValue_ = ledValue_ +1;
+    analogWrite(mosfetPin, ledValue_);
+    return;
+  }
+
+  void fadeOut() {
+
+    ledValue_ = ledValue_ -1;
+    analogWrite(mosfetPin, ledValue_);
+    return;
+  }
+
+protected:
+
+ int ledValue_ = 0;
+
+ bool fadeRising_ = true;
+
+ const int ledMaxValue_ = 255;
+ const int ledMinValue_ = 0;
+
+};
+
+
+//
+// global var
 int mosfetValue = 0;
 
 long appStart = 0;
 
 CapacitiveSensor   cs_4_2 = CapacitiveSensor(4,2);   // 1M resistor between pins 4 & 2, pin 2 is sensor pin,
                                                      // add a wire and or foil if desired
+const int sensorThreshold = 40;
 
-const int sensorThreshold = 500;
+Led ledObj;
+
+int couterReading = 0;
 
 void setup() {
 
@@ -82,116 +174,40 @@ void setup() {
 
 void loop() {
 
-  long sensorStart = millis();
-
-  if((sensorStart - appStart) > 30000 ) {
-    delay(1000);
-    print_debug("fading disabled\n");
+    long sensorStart = millis();
 
     //
-    // enter low-power mode
-    suspendDevice(SLEEP_8S, 1 /* period(s) count */);
+    // fading enabled
+
+    static long sensorVal = 0;
+
+    couterReading = couterReading +1;
     
-  } else {
+    if(couterReading >= 20) {
+      couterReading = 0;
+      long sensorStart2 = millis();
+      sensorVal =  cs_4_2.capacitiveSensor(30);
 
-    //print_debug("reading button sensor ...\n");
-    long sensorVal =  cs_4_2.capacitiveSensor(30);
+      long currentTime = millis();
+      Serial.print(currentTime - sensorStart2);  // check on performance in milliseconds
+      Serial.print("\t");                    // tab character for debug windown spacing
 
-    //Serial.print(millis() - sensorStart);  // check on performance in milliseconds
-    //Serial.print("\t");                    // tab character for debug windown spacing
-
-    //Serial.print(sensorVal);               // print sensor output 1
-    //Serial.print("\t\n");
+      Serial.print(sensorVal);               // print sensor output 1
+      Serial.print("\t\n");
+    }
 
     if( sensorVal > sensorThreshold /* button Pressed */ ) {
 
-      //print_debug("button pressed\n");
-    
-      fadeLed(mosfetValue);
-  
-      if(mosfetValue == 255) {
-        delay(400);    
-      }
-      if(mosfetValue == 0) {
-        delay(400);    
-      }
-    
+      ledObj.fadeInOut();
+
       appStart = sensorStart;
     }
-  
-    delay(delayFadingLoop);
-  }
-  //print_debug( "led dimming on ..." );
-  //
-  // turn LED on with fading-in
-  //for (mosfetValue = 0; mosfetValue < 255; mosfetValue++) {
-  //  analogWrite( mosfetPin, mosfetValue);
-  //  delay(delayFadingLoop);
-  //}
-  //print_debug( "led full power on ..." );
 
-  //delay(3000);
-  
-  //
-  // turn LED off with fading-out
-  //print_debug( "led dimming off ..." );
-  //for (mosfetValue = 255; mosfetValue > 0 ; mosfetValue--) {
-  //  analogWrite( mosfetPin, mosfetValue);
-  //  delay(delayFadingLoop);
-  //}
-  //print_debug( "led power off ..." );
+    //delay(delayFadingLoop);
+    long afterAdjust = millis();
+    if(afterAdjust - sensorStart < delayFadingLoop ) {
 
-  //delay(3000);
-}
-
-class Led {
-  Led() {};
-
-  void fadeLed() {};
-};
-
-void fadeLed(int &value) {
-
-  static bool fadeRising = true;
-
-  const int maxValue = 255;
-  const int minValue = 0;
-
-  if(value >= maxValue) {
-    value = maxValue;
-    fadeRising = false;
-    
-  } else if(value <= minValue) {
-    value = minValue;
-    fadeRising = true;
-  }
-  
-  if(fadeRising) {
-    //print_debug( "led fade-in ..." );
-    analogWrite(mosfetPin, ++value);
-    
-  } else {
-    //print_debug( "led fade-out ..." );
-    analogWrite(mosfetPin, --value);
-  }
-
-  return;
-}
-
-void suspendDevice(const period_t sleepPeriod, const int periodCount) {
-    //
-    // go into long low-power mode
-    print_debug( "low-power mode ..." );
-
-    for(int i = 0; i < periodCount; i++) {
-      //
-      // low power with timer ON
-      //LowPower.idle(SLEEP_8S /*sleepPeriod*/, ADC_OFF, TIMER2_ON, TIMER1_ON, TIMER0_ON, SPI_OFF, USART0_OFF, TWI_OFF);
-      LowPower.idle(SLEEP_8S, ADC_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF, SPI_OFF, USART0_OFF, TWI_OFF);
+      long actualDelay = delayFadingLoop - (afterAdjust - sensorStart);
+      delay(actualDelay);
     }
-    delay(200);
-
-    print_debug( "resuming from low-power mode ..." );
-
-  return ;
 }
