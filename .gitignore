@@ -1,0 +1,7 @@
+#
+# git ignore files/dirs
+tmp/
+
+*.o
+
+build*
