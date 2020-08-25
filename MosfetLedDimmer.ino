@@ -38,7 +38,7 @@
 // program version
 const String currVersion = "v20200821";
 
-const int delayFadingLoop = 24;   // 12 millisec.
+const int delayFadingLoop = 32;   // 32 millisec.
 
 //
 // pin layout
@@ -86,16 +86,18 @@ public:
       fadeIn();
 
       if(ledValue_ >= ledMaxValue_) {
-        
+
+        Serial.print("\nfading TOP\n");
         ledValue_ = ledMaxValue_;
         fadeRising_ = false;
       }
-  
     } else {
       
       fadeOut();
   
       if(ledValue_ <= ledMinValue_) {
+
+        Serial.print("\nfading BOTTOM\n");
         
         ledValue_ = ledMinValue_;
         fadeRising_ = true;
@@ -139,11 +141,11 @@ long appStart = 0;
 
 CapacitiveSensor   cs_4_2 = CapacitiveSensor(4,2);   // 1M resistor between pins 4 & 2, pin 2 is sensor pin,
                                                      // add a wire and or foil if desired
-const int sensorThreshold = 40;
+const int sensorThreshold = 150;
 
 Led ledObj;
 
-int couterReading = 0;
+int counterReading = 0;
 
 void setup() {
 
@@ -181,10 +183,10 @@ void loop() {
 
     static long sensorVal = 0;
 
-    couterReading = couterReading +1;
+    counterReading = counterReading +1;
     
-    if(couterReading >= 20) {
-      couterReading = 0;
+    if(counterReading >= 10) {
+      counterReading = 0;
       long sensorStart2 = millis();
       sensorVal =  cs_4_2.capacitiveSensor(30);
 
