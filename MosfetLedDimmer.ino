@@ -36,8 +36,10 @@
 
 //
 // program version
-const String currVersion = "v20200821";
+const String currVersion = "v20200825";
 
+//
+// fade delay in main loop
 const int delayFadingLoop = 32;   // 32 millisec.
 
 //
@@ -135,12 +137,15 @@ protected:
 
 //
 // global var
-int mosfetValue = 0;
 
-long appStart = 0;
+//
+// current LED dimmer values (0 off; 255 on at max intensity)
+int mosfetValue = 0;
 
 CapacitiveSensor   cs_4_2 = CapacitiveSensor(4,2);   // 1M resistor between pins 4 & 2, pin 2 is sensor pin,
                                                      // add a wire and or foil if desired
+//
+// capacitive sensor threshold (value greater than this trigger the state to pressed)
 const int sensorThreshold = 150;
 
 Led ledObj;
@@ -154,9 +159,6 @@ void setup() {
   Serial.begin( 9600 );
   print_debug( "led dimmer app starting ..." );
   print_debug( currVersion );
-
-  // init app startup time
-  appStart = millis();
 
   //
   // mosfetPin: initialize as an output.
@@ -176,7 +178,7 @@ void setup() {
 
 void loop() {
 
-    long sensorStart = millis();
+    long loopStart = millis();
 
     //
     // fading enabled
@@ -187,11 +189,11 @@ void loop() {
     
     if(counterReading >= 10) {
       counterReading = 0;
-      long sensorStart2 = millis();
+      long sensorStart = millis();
       sensorVal =  cs_4_2.capacitiveSensor(30);
 
       long currentTime = millis();
-      Serial.print(currentTime - sensorStart2);  // check on performance in milliseconds
+      Serial.print(currentTime - sensorStart);  // check on performance in milliseconds
       Serial.print("\t");                    // tab character for debug windown spacing
 
       Serial.print(sensorVal);               // print sensor output 1
@@ -201,15 +203,14 @@ void loop() {
     if( sensorVal > sensorThreshold /* button Pressed */ ) {
 
       ledObj.fadeInOut();
-
-      appStart = sensorStart;
     }
 
-    //delay(delayFadingLoop);
+    //
+    // delay for fading effect
     long afterAdjust = millis();
-    if(afterAdjust - sensorStart < delayFadingLoop ) {
+    if(afterAdjust - loopStart < delayFadingLoop ) {
 
-      long actualDelay = delayFadingLoop - (afterAdjust - sensorStart);
+      long actualDelay = delayFadingLoop - (afterAdjust - loopStart);
       delay(actualDelay);
     }
 }
