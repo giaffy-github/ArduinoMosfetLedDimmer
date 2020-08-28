@@ -127,12 +127,15 @@ public:
     return;
   }
 
-  void fadeOut() {
+  void fadeInToTargetValue(const int targetValue) {
 
-    ledValue_ = ledValue_ -1;
-    analogWrite(mosfetPin, ledValue_);
+    while(ledCurrentValue_ < targetValue) {
+      increaseDim();
+      delay(delayFadingLoop);
+    }
     return;
   }
+
 
 protected:
 
