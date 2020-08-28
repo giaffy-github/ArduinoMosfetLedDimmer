@@ -176,6 +176,11 @@ void setup() {
   print_debug( "init capacity sensor lib ..." );
   cs_4_2.set_CS_AutocaL_Millis(0xFFFFFFFF);     // turn off autocalibrate on channel 1 - just as an example
 
+  //
+  // fading LED to 75%
+  print_debug( "initial fading led to 50 % ..." );
+  ledObj.fadeInToTargetValue(200*.5);
+
   print_debug( "app ready ..." );
 }
 
