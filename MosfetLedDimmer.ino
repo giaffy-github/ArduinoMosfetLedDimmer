@@ -140,7 +140,7 @@ protected:
 
  bool fadeRising_ = true;
 
- const int ledMaxValue_ = 255;
+ const int ledMaxValue_ = 200;
  const int ledMinValue_ = 0;
 
 };
