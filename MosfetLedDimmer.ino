@@ -36,11 +36,11 @@
 
 //
 // program version
-const String currVersion = "v20200825";
+const String currVersion = "v20200828";
 
 //
 // fade delay in main loop
-const int delayFadingLoop = 32;   // 32 millisec.
+const int delayFadingLoop = 28;   // 28 millisec.
 
 //
 // pin layout
@@ -53,7 +53,7 @@ class Led {
 public:
 
   Led() : ledCurrentValue_(0), fadeRising_(true) {
-    
+
     //
     // mosfetPin: initialize as an output and write initial value
     pinMode( mosfetPin, OUTPUT);
@@ -61,9 +61,9 @@ public:
   
     return;
   };
-
-  Led(const Led&) = delete;
   
+  Led(const Led&) = delete;
+
   Led operator=(const Led&) = delete;
 
   Led(const int initialLedValue, const bool rising) : ledCurrentValue_(initialLedValue), fadeRising_(rising) {
@@ -77,18 +77,18 @@ public:
 
   void setLedValue(const int initialLedValue) {
   
-    ledValue_ = initialLedValue;
+    ledCurrentValue_ = initialLedValue;
 
-    if(ledValue_ >= ledMaxValue_) {
+    if(ledCurrentValue_ >= ledMaxValue_) {
         
-        ledValue_ = ledMaxValue_;
+        ledCurrentValue_ = ledMaxValue_;
   
-    } else if(ledValue_ <= ledMinValue_) {
+    } else if(ledCurrentValue_ <= ledMinValue_) {
         
-        ledValue_ = ledMinValue_;
+        ledCurrentValue_ = ledMinValue_;
     }
 
-    analogWrite(mosfetPin, ledValue_);
+    analogWrite(mosfetPin, ledCurrentValue_);
     return;
   };
 
@@ -96,23 +96,22 @@ public:
     
     if(fadeRising_) {
       
-      fadeIn();
+      increaseDim();
 
-      if(ledValue_ >= ledMaxValue_) {
+      if(ledCurrentValue_ >= ledMaxValue_) {
 
         Serial.print("\nfading TOP\n");
-        ledValue_ = ledMaxValue_;
+        ledCurrentValue_ = ledMaxValue_;
         fadeRising_ = false;
       }
     } else {
       
-      fadeOut();
+      decreaseDim();
   
-      if(ledValue_ <= ledMinValue_) {
+      if(ledCurrentValue_ <= ledMinValue_) {
 
         Serial.print("\nfading BOTTOM\n");
-        
-        ledValue_ = ledMinValue_;
+        ledCurrentValue_ = ledMinValue_;
         fadeRising_ = true;
       }
     }
@@ -120,10 +119,17 @@ public:
     return;
   }
 
-  void fadeIn() {
+  void increaseDim() {
 
-    ledValue_ = ledValue_ +1;
-    analogWrite(mosfetPin, ledValue_);
+    ledCurrentValue_ = ledCurrentValue_ +1;
+    analogWrite(mosfetPin, ledCurrentValue_);
+    return;
+  }
+
+  void decreaseDim() {
+
+    ledCurrentValue_ = ledCurrentValue_ -1;
+    analogWrite(mosfetPin, ledCurrentValue_);
     return;
   }
 
@@ -139,7 +145,7 @@ public:
 
 protected:
 
- int ledValue_ = 0;
+ int ledCurrentValue_ = 0;
 
  bool fadeRising_ = true;
 
@@ -217,7 +223,8 @@ void loop() {
     }
 
     //
-    // delay for fading effect
+    // delay for fading effect: keep into account delay to read sensor
+    // and try to delay the same time interval
     long afterAdjust = millis();
     if(afterAdjust - loopStart < delayFadingLoop ) {
 
