@@ -146,7 +146,7 @@ CapacitiveSensor   cs_4_2 = CapacitiveSensor(4,2);   // 1M resistor between pins
                                                      // add a wire and or foil if desired
 //
 // capacitive sensor threshold (value greater than this trigger the state to pressed)
-const int sensorThreshold = 150;
+const int sensorThreshold = 450;
 
 Led ledObj;
 
