@@ -58,9 +58,9 @@ public:
     return;
   };
 
-  Led(const int initialLedValue) : ledValue_(initialLedValue), fadeRising_(true) {
+  Led(const Led&) = delete;
   
-    analogWrite(mosfetPin, ledValue_);
+  Led operator=(const Led&) = delete;
     return;
   };
 
