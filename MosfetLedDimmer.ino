@@ -142,6 +142,14 @@ public:
     return;
   }
 
+  void fadeOutToTargetValue(const int targetValue) {
+
+    while(ledCurrentValue_ > targetValue) {
+      decreaseDim();
+      delay(delayFadingLoop);
+    }
+    return;
+  }
 
 protected:
 
