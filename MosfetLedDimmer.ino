@@ -166,10 +166,7 @@ protected:
 //
 // global var
 
-//
-// current LED dimmer values (0 off; 255 on at max intensity)
-int mosfetValue = 0;
-
+// capacitive sensor ports pair: pin 4 out signal, 2 reading capacitance
 CapacitiveSensor   cs_4_2 = CapacitiveSensor(4,2);   // 1M resistor between pins 4 & 2, pin 2 is sensor pin,
                                                      // add a wire and or foil if desired
 //
