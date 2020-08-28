@@ -100,7 +100,7 @@ public:
 
       if(ledCurrentValue_ >= ledMaxValue_) {
 
-        Serial.print("\nfading TOP\n");
+        print_debug("\nfading TOP\n");
         ledCurrentValue_ = ledMaxValue_;
         fadeRising_ = false;
       }
@@ -110,7 +110,7 @@ public:
   
       if(ledCurrentValue_ <= ledMinValue_) {
 
-        Serial.print("\nfading BOTTOM\n");
+        print_debug("\nfading BOTTOM\n");
         ledCurrentValue_ = ledMinValue_;
         fadeRising_ = true;
       }
