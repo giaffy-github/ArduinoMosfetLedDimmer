@@ -21,7 +21,7 @@
 #ifdef DEBUG
 //
 // enable debug print
-// note: a delay of 200 msec is used to allow the console
+// note: a delay of 1 msec. is used to allow the console
 //       to finish the output of message
 #define print_debug( X ) do {   \
     Serial.println( X ); \
@@ -43,8 +43,12 @@ const String currVersion = "v20200828";
 const int delayFadingLoop = 28;   // 28 millisec.
 
 //
-// pin layout
-const int mosfetPin = 9;          // PWM pin
+// pin layout: to mosfet gate, PWM capable pin
+const int mosfetPin = 9;
+
+//
+// capacitive sensor threshold (value greater than this trigger the state to pressed)
+const int sensorThreshold = 450;
 
 //
 // LED manager class
@@ -169,9 +173,7 @@ protected:
 // capacitive sensor ports pair: pin 4 out signal, 2 reading capacitance
 CapacitiveSensor   cs_4_2 = CapacitiveSensor(4,2);   // 1M resistor between pins 4 & 2, pin 2 is sensor pin,
                                                      // add a wire and or foil if desired
-//
-// capacitive sensor threshold (value greater than this trigger the state to pressed)
-const int sensorThreshold = 450;
+                                                     // 100 pF on pin 2 and ground to stabilize reading;
 
 Led ledObj;
 
@@ -202,13 +204,13 @@ void loop() {
 
     long loopStart = millis();
 
-    //
-    // fading enabled
+    counterReading = counterReading +1;
 
+    // value returned by capacitive sensor button: needs to be static as
+    // reading is done avery 10th iterations to limit the time consumed;
+    // last reading is kepr till next reading, and fading take place if required
     static long sensorVal = 0;
 
-    counterReading = counterReading +1;
-    
     if(counterReading >= 10) {
       counterReading = 0;
       long sensorStart = millis();
