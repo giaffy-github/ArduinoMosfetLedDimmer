@@ -52,15 +52,26 @@ class Led {
 
 public:
 
-  Led() : ledValue_(0), fadeRising_(true) {
+  Led() : ledCurrentValue_(0), fadeRising_(true) {
     
-    analogWrite(mosfetPin, ledValue_);
+    //
+    // mosfetPin: initialize as an output and write initial value
+    pinMode( mosfetPin, OUTPUT);
+    analogWrite(mosfetPin, ledCurrentValue_);
+  
     return;
   };
 
   Led(const Led&) = delete;
   
   Led operator=(const Led&) = delete;
+
+  Led(const int initialLedValue, const bool rising) : ledCurrentValue_(initialLedValue), fadeRising_(rising) {
+    //
+    // mosfetPin: initialize as an output and write initial value
+    pinMode( mosfetPin, OUTPUT);
+    analogWrite(mosfetPin, ledCurrentValue_);
+   
     return;
   };
 
@@ -159,14 +170,6 @@ void setup() {
   Serial.begin( 9600 );
   print_debug( "led dimmer app starting ..." );
   print_debug( currVersion );
-
-  //
-  // mosfetPin: initialize as an output.
-  print_debug( "set mosfet pin output ..." );
-  print_debug( mosfetPin );
-  pinMode( mosfetPin, OUTPUT);
-
-  analogWrite( mosfetPin, mosfetValue);
 
   //
   // capacitor sensor
