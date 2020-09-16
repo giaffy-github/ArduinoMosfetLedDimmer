@@ -16,7 +16,7 @@
 
 //
 // enable debug printout
-#define DEBUG 1
+//#define DEBUG 1
 
 #ifdef DEBUG
 //
@@ -36,11 +36,11 @@
 
 //
 // program version
-const String currVersion = "v20200828";
+const String currVersion = "v20200902";
 
 //
 // fade delay in main loop
-const int delayFadingLoop = 28;   // 28 millisec.
+const int delayFadingLoop = 24;   // 24 millisec. used in LED fading in/out
 
 //
 // pin layout: to mosfet gate, PWM capable pin
@@ -48,7 +48,11 @@ const int mosfetPin = 9;
 
 //
 // capacitive sensor threshold (value greater than this trigger the state to pressed)
-const int sensorThreshold = 450;
+const int sensorThreshold = 550;
+
+//
+//
+const int pmwMaxValue = 230;  // approx. 90% of max value
 
 //
 // LED manager class
@@ -161,7 +165,7 @@ protected:
 
  bool fadeRising_ = true;
 
- const int ledMaxValue_ = 254;
+ const int ledMaxValue_ = pmwMaxValue;  // approx. 90% of max value
  const int ledMinValue_ = 0;
 
 };
@@ -188,14 +192,14 @@ void setup() {
   print_debug( currVersion );
 
   //
+  // fading-in LED from 0 to 75%
+  print_debug( "initial fading led to 75 % ..." );
+  ledObj.fadeInToTargetValue(pmwMaxValue * 0.75);
+
+  //
   // capacitor sensor
   print_debug( "init capacity sensor lib ..." );
   cs_4_2.set_CS_AutocaL_Millis(0xFFFFFFFF);     // turn off autocalibrate on channel 1 - just as an example
-
-  //
-  // fading-in LED from 0 to 75%
-  print_debug( "initial fading led to 75 % ..." );
-  ledObj.fadeInToTargetValue(200 * 0.75);
 
   print_debug( "app ready ..." );
 }
