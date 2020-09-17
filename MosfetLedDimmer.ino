@@ -63,7 +63,7 @@ const int sensorThreshold = 550;
 
 //
 //
-const int pmwMaxValue = 230;  // approx. 90% of max value
+const int pmwMaxValue = 200;  // approx. 80% of max value
 
 //
 // LED manager class
