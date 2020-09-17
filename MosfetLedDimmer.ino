@@ -16,7 +16,7 @@
 
 //
 // enable debug printout
-//#define DEBUG 1
+#define DEBUG 1
 
 #ifdef DEBUG
 //
@@ -27,6 +27,12 @@
     Serial.println( X ); \
     delay(1);          \
   } while(0)
+
+#define print_debugnln( X ) do {   \
+    Serial.print( X ); \
+    delay(1);          \
+  } while(0)
+  
 #else
 //
 // disable debug print
