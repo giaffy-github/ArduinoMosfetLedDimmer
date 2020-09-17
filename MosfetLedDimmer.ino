@@ -158,7 +158,11 @@ public:
 
     while(ledCurrentValue_ < targetValue) {
       increaseDim();
-      delay(delayFadingLoop);
+      if(ledCurrentValue_ < targetValue / 3) {
+        delay(delayFadingLoop * 1.5); // 50 % slower
+      } else {
+        delay(delayFadingLoop * 0.5); // 50 % faster
+      }
     }
     return;
   }
