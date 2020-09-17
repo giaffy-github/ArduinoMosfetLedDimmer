@@ -42,11 +42,11 @@
 
 //
 // program version
-const String currVersion = "v20200902";
+const String currVersion = "v20200917";
 
 //
 // fade delay in main loop
-const int delayFadingLoop = 24;   // 24 millisec. used in LED fading in/out
+const int delayFadingLoop = 25;   // 25 millisec. used in LED fading in/out
 
 //
 // pin layout: to mosfet gate, PWM capable pin
@@ -59,7 +59,7 @@ const int capacitySensorInPin = 2;
 
 //
 // capacitive sensor threshold (value greater than this trigger the state to pressed)
-const int sensorThreshold = 550;
+const int sensorThreshold = 1400;
 
 //
 //
@@ -182,7 +182,7 @@ protected:
 
  bool fadeRising_ = true;
 
- const int ledMaxValue_ = pmwMaxValue;  // approx. 90% of max value
+ const int ledMaxValue_ = pmwMaxValue;
  const int ledMinValue_ = 0;
 
 };
@@ -195,7 +195,7 @@ protected:
 CapacitiveSensor   cs_4_2 = CapacitiveSensor(capacitySensorOutPin,capacitySensorInPin);
                           // pin 4 === 1M resistor === foil === 10 K resistor === pin 2
                           // pin 4 out, pin 2 is sensor pin,
-                                                     // 100 pF on pin 2 and ground to stabilize reading;
+                          // 100 pF on pin 2 and ground to stabilize reading;
 
 Led ledObj;
 
