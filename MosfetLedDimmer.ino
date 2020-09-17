@@ -199,8 +199,6 @@ CapacitiveSensor   cs_4_2 = CapacitiveSensor(capacitySensorOutPin,capacitySensor
 
 Led ledObj;
 
-int counterReading = 0;
-
 void setup() {
 
   //
@@ -244,6 +242,7 @@ void loop() {
 
     long loopStart = millis();
 
+    static int counterReading = 0;
     counterReading = counterReading +1;
 
     // value returned by capacitive sensor button: needs to be static as
