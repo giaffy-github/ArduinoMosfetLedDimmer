@@ -122,6 +122,7 @@ public:
         print_debug("\nfading TOP\n");
         ledCurrentValue_ = ledMaxValue_;
         fadeRising_ = false;
+        delay(250); // keep top for 1/4 sec
       }
     } else {
       
@@ -132,6 +133,7 @@ public:
         print_debug("\nfading BOTTOM\n");
         ledCurrentValue_ = ledMinValue_;
         fadeRising_ = true;
+        delay(250); // keep bottom for 1/4 sec
       }
     }
 
