@@ -200,13 +200,31 @@ void setup() {
   //
   // init console
   Serial.begin( 9600 );
-  print_debug( "led dimmer app starting ..." );
+  print_debugnln( "led dimmer app starting " );
   print_debug( currVersion );
 
   //
   // fading-in LED from 0 to 75%
+  print_debugnln( "PMW pin out to mosfet: " );
+  print_debug( mosfetPin );
+  print_debugnln( "PMW min / max values: 0 / " );
+  print_debug( pmwMaxValue );
   print_debug( "initial fading led to 75 % ..." );
   ledObj.fadeInToTargetValue(pmwMaxValue * 0.75);
+
+  //
+  // fading delay
+  print_debugnln( "Fading delay ms: " );
+  print_debug( delayFadingLoop );
+
+  //
+  // capacity sensor threshold
+  print_debugnln( "capacity sensor threshold number: " );
+  print_debug( sensorThreshold );
+  print_debugnln( "capacity sensor out pin: " );
+  print_debug( capacitySensorOutPin );
+  print_debugnln( "capacity sensor in pin: " );
+  print_debug( capacitySensorInPin );
 
   //
   // capacitor sensor
