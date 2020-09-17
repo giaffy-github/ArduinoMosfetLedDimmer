@@ -46,7 +46,7 @@ const String currVersion = "v20200917";
 
 //
 // fade delay in main loop
-const int delayFadingLoop = 25;   // 25 millisec. used in LED fading in/out
+const int delayFadingLoop = 30;   // 25 millisec. used in LED fading in/out
 
 //
 // pin layout: to mosfet gate, PWM capable pin
@@ -122,7 +122,7 @@ public:
         print_debug("\nfading TOP\n");
         ledCurrentValue_ = ledMaxValue_;
         fadeRising_ = false;
-        delay(250); // keep top for 1/4 sec
+        delay(500); // keep top for 1/2 sec
       }
     } else {
       
@@ -133,7 +133,7 @@ public:
         print_debug("\nfading BOTTOM\n");
         ledCurrentValue_ = ledMinValue_;
         fadeRising_ = true;
-        delay(250); // keep bottom for 1/4 sec
+        delay(500); // keep bottom for 1/2 sec
       }
     }
 
