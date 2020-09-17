@@ -253,6 +253,9 @@ void loop() {
     const int idleReadingStep = 7; // do not read the sensor for x cycle
     
     if(counterReading >= idleReadingStep) {
+
+      static int sensorMax = 0;
+      
       counterReading = 0;
       long sensorStart = millis();
       sensorVal =  cs_4_2.capacitiveSensor(30);
@@ -261,8 +264,16 @@ void loop() {
       Serial.print(currentTime - sensorStart);  // check on performance in milliseconds
       Serial.print("\t");                    // tab character for debug windown spacing
 
-      Serial.print(sensorVal);               // print sensor output 1
+      Serial.print(sensorVal);               // print sensor output
       Serial.print("\t\n");
+
+      if(sensorVal > sensorMax) {
+        sensorMax = sensorVal;
+      }
+
+      Serial.print("max val: ");
+      Serial.print(sensorMax);
+      Serial.print("\n");
     }
 
     if( sensorVal > sensorThreshold /* button Pressed */ ) {
