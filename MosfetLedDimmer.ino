@@ -53,6 +53,11 @@ const int delayFadingLoop = 24;   // 24 millisec. used in LED fading in/out
 const int mosfetPin = 9;
 
 //
+// pin layout: capacity sensor out and int
+const int capacitySensorOutPin = 4;
+const int capacitySensorInPin = 2;
+
+//
 // capacitive sensor threshold (value greater than this trigger the state to pressed)
 const int sensorThreshold = 550;
 
@@ -181,8 +186,9 @@ protected:
 // global var
 
 // capacitive sensor ports pair: pin 4 out signal, 2 reading capacitance
-CapacitiveSensor   cs_4_2 = CapacitiveSensor(4,2);   // 1M resistor between pins 4 & 2, pin 2 is sensor pin,
-                                                     // add a wire and or foil if desired
+CapacitiveSensor   cs_4_2 = CapacitiveSensor(capacitySensorOutPin,capacitySensorInPin);
+                          // pin 4 === 1M resistor === foil === 10 K resistor === pin 2
+                          // pin 4 out, pin 2 is sensor pin,
                                                      // 100 pF on pin 2 and ground to stabilize reading;
 
 Led ledObj;
