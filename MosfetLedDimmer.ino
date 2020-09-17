@@ -251,7 +251,9 @@ void loop() {
     // last reading is kepr till next reading, and fading take place if required
     static long sensorVal = 0;
 
-    if(counterReading >= 10) {
+    const int idleReadingStep = 7; // do not read the sensor for x cycle
+    
+    if(counterReading >= idleReadingStep) {
       counterReading = 0;
       long sensorStart = millis();
       sensorVal =  cs_4_2.capacitiveSensor(30);
