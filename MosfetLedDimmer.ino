@@ -226,7 +226,7 @@ void setup() {
   //
   // capacitor sensor
   print_debug( "create reference values to account for the capacitance of the pad ..." );
-  sensorRef0 = ADCTouch.read(A0, 500);    //create reference values to account for the capacitance of the pad
+  sensorRef0 = ADCTouchClass::read(A0, 500);    //create reference values to account for the capacitance of the pad
 
   print_debugnln( "capacitance reference: " );
   print_debug(sensorRef0);
@@ -253,7 +253,7 @@ void loop() {
         counterReading = 0; // restart counter
         long sensorStart = millis();  // get initial time
   
-        sensorValue0 = ADCTouch.read(A0, 75);   // read pin A0, 75 samples
+        sensorValue0 = ADCTouchClass::read(A0, 80);   // read pin A0, 80 samples
         sensorValue0 -= sensorRef0;       //remove offset
   
         long currentTime = millis();  // get current time

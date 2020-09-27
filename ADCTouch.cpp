@@ -45,5 +45,3 @@ int ADCTouchClass::read(byte ADCChannel, int samples)
   }
   return _value / samples;
 }
-
-ADCTouchClass ADCTouch;

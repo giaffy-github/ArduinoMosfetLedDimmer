@@ -22,9 +22,7 @@ const uint8_t PROGMEM analog_pin_to_digital_pin[] = {
 class ADCTouchClass
 {
   public:
-  int read(byte ADCChannel, int samples = 100);
+  static int read(byte ADCChannel, int samples = 100);
 };
-
-extern ADCTouchClass ADCTouch;
 
 #endif
