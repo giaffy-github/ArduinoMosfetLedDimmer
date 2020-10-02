@@ -8,11 +8,11 @@
 
 //
 // sleep / powerdown header
-//#include "LowPower.h"
+#include "LowPower.h"
 
 //
 // capacitive sensor header
-#include "ADCTouch.h"
+//#include "ADCTouch.h"
 
 //
 // enable debug printout
@@ -42,11 +42,12 @@
 
 //
 // program version
-const String currVersion = "v20200919";
+const String currVersion = "v20201002";
 
 //
 // fade delay in main loop
-const int delayFadingLoop = 30;   // 25 millisec. used in LED fading in/out
+const int delayFadingLoop = 25;   // 20 millisec
+const int delayMainLoop = 1000;   // 1 sec
 
 //
 // pin layout: to mosfet gate, PWM capable pin
@@ -57,11 +58,15 @@ const int mosfetPin = 9;
 
 //
 // capacitive sensor threshold (value greater than this trigger the state to pressed)
-const int sensorThreshold = 40;
+//const int sensorThreshold = 40;
 
 //
 //
 const int pmwMaxValue = 200;  // approx. 80% of max value
+
+const int ledFadeValue01 = (pmwMaxValue * 0.75);  // 75 %
+const int ledFadeValue02 = (pmwMaxValue * 0.25);  // 25 %
+const int ledFadeValue03 = (pmwMaxValue * 0.10);  // 10 %
 
 //
 // LED manager class
@@ -185,7 +190,6 @@ protected:
 
 };
 
-
 //
 // global var
 
@@ -194,6 +198,25 @@ Led ledObj;
 int counterReading = 0;
 
 int sensorRef0 = 0;     //reference values to remove offset
+
+long timeAppStart = 0;
+
+void suspendDevice(const period_t sleepPeriod, const int periodCount) {
+    //
+    // go into long low-power mode
+    print_debug( "low-power mode ..." );
+
+    for(int i = 0; i < periodCount; i++) {
+      //
+      // enter power down state with ADC and BOD module disabled
+      LowPower.powerDown(sleepPeriod, ADC_OFF, BOD_OFF);
+    }
+    delay(200);
+
+    print_debug( "resuming from low-power mode ..." );
+
+  return ;
+}
 
 void setup() {
 
@@ -210,7 +233,25 @@ void setup() {
   print_debugnln( "PMW min / max values: 0 / " );
   print_debug( pmwMaxValue );
   print_debug( "initial fading led to 75 % ..." );
-  ledObj.fadeInToTargetValue(pmwMaxValue * 0.75);
+  ledObj.fadeInToTargetValue(ledFadeValue01);
+
+  print_debugnln( "Fading value initial period: " );
+  print_debug( ledFadeValue01 );
+
+  print_debugnln( "Fading value 2nd period: " );
+  print_debug( ledFadeValue02 );
+
+  print_debugnln( "Fading value 3nd period: " );
+  print_debug( ledFadeValue03 );
+
+//  print_debugnln( "period 1: " );
+//  print_debug( timeExpire01 );
+//
+//  print_debugnln( "period 2: " );
+//  print_debug( timeExpire02 );
+//
+//  print_debugnln( "period 3: " );
+//  print_debug( timeExpire03 );
 
   //
   // fading delay
@@ -219,64 +260,66 @@ void setup() {
 
   //
   // capacity sensor threshold
-  print_debugnln( "capacity sensor threshold number: " );
-  print_debug( sensorThreshold );
-  print_debug( "capacity sensor pin: A0" );
+  //print_debugnln( "capacity sensor threshold number: " );
+  //print_debug( sensorThreshold );
+  //print_debug( "capacity sensor pin: A0" );
 
   //
   // capacitor sensor
-  print_debug( "create reference values to account for the capacitance of the pad ..." );
-  sensorRef0 = ADCTouchClass::read(A0, 500);    //create reference values to account for the capacitance of the pad
+  //print_debug( "create reference values to account for the capacitance of the pad ..." );
+  //sensorRef0 = ADCTouchClass::read(A0, 500);    //create reference values to account for the capacitance of the pad
 
-  print_debugnln( "capacitance reference: " );
-  print_debug(sensorRef0);
+//  print_debugnln( "capacitance reference: " );
+//  print_debug(sensorRef0);
+
+  timeAppStart = millis();
 
   print_debug( "app ready ..." );
 }
 
 void loop() {
 
-    long loopStart = millis();
+    long timeLoopStart = millis();
 
-    static int counterReading = 0;
-    counterReading = counterReading +1;
+    static long timeElapsedSinceEpoch = 0;
 
-    // value returned by capacitive sensor button: needs to be static as
-    // reading is done avery 10th iterations to limit the time consumed;
-    // last reading is kept till next reading, and fading take place if required
-    static int sensorValue0 = 0;
+    const long timeExpire01 = 25 * 60; // 25 min
+    const long timeExpire02 = 35 * 60; // 35 min
+    const long timeExpire03 = 45 * 60; // 45 min
 
-    const int idleReadingStep = 10; // do not read the sensor for x cycle
-    
-    if(counterReading >= idleReadingStep) {
-      
-        counterReading = 0; // restart counter
-        long sensorStart = millis();  // get initial time
-  
-        sensorValue0 = ADCTouchClass::read(A0, 80);   // read pin A0, 80 samples
-        sensorValue0 -= sensorRef0;       //remove offset
-  
-        long currentTime = millis();  // get current time
-        Serial.print(currentTime - sensorStart);  // check on performance in milliseconds
-        Serial.print("\t");
-  
-        Serial.print(sensorValue0);               // print sensor value
-        Serial.print("\t\n");
-    }
+    timeElapsedSinceEpoch += 1;
 
-    if( sensorValue0 > sensorThreshold /* button Pressed */ ) {
+    if(timeElapsedSinceEpoch > timeExpire03) {
 
-        ledObj.fadeInOut();
+        print_debug( "fade-out led to 0% and suspend forever..." );
+        ledObj.fadeOutToTargetValue(0);
+
+        //
+        // suspend forever
+        while(1) {
+          //
+          // just go into long low-power mode (about 32sec.)
+          suspendDevice(SLEEP_8S, 4 /* period(s) count */);
+        }
+    } else if(timeElapsedSinceEpoch > timeExpire02) {
+
+        print_debug( "fade-out led to 20 % ..." );
+        ledObj.fadeOutToTargetValue(ledFadeValue03);
+        
+    } else if(timeElapsedSinceEpoch > timeExpire01) {
+
+        print_debug( "fade-out led to 40 % ..." );
+        ledObj.fadeOutToTargetValue(ledFadeValue02);
     }
 
     //
     // delay for fading effect: keep into account delay to read sensor
     // and try to delay the same time interval
-    long afterAdjust = millis();
+    long timeAfterAdjust = millis();
 
-    if(afterAdjust - loopStart < delayFadingLoop ) {
+    if(timeAfterAdjust - timeLoopStart < delayMainLoop ) {
 
-        long actualDelay = delayFadingLoop - (afterAdjust - loopStart);
+        long actualDelay = delayMainLoop - (timeAfterAdjust - timeLoopStart);
         delay(actualDelay);
     }
 }
