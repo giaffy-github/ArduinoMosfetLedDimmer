@@ -42,12 +42,12 @@
 
 //
 // program version
-const String currVersion = "v20201003";
+const String currVersion = "v20201005";
 
 //
 // fade delay in main loop
-const int delayFadingLoop = 25;   // 20 millisec
-const int delayMainLoop = 1000;   // 1 sec
+const int delayFadingLoop = 25;   // 25 millisec
+const int delayMainLoop = 1000;   // 1000 msec (i.e. 1 sec)
 
 //
 // pin layout: to mosfet gate, PWM capable pin
@@ -64,7 +64,7 @@ const int sensorThreshold = 40;
 //
 const int pmwMaxValue = 200;  // approx. 80% of max value
 
-const int ledFadeValue01 = (pmwMaxValue * 0.75);  // 75 %
+const int ledFadeValue01 = (pmwMaxValue * 0.90);  // 90 %
 const int ledFadeValue02 = (pmwMaxValue * 0.35);  // 35 %
 const int ledFadeValue03 = (pmwMaxValue * 0.10);  // 10 %
 
@@ -227,22 +227,23 @@ void setup() {
   print_debug( currVersion );
 
   //
-  // fading-in LED from 0 to 75%
+  // fading-in LED from 0 to ledFadeValue01
   print_debugnln( "PMW pin out to mosfet: " );
   print_debug( mosfetPin );
   print_debugnln( "PMW min / max values: 0 / " );
   print_debug( pmwMaxValue );
-  print_debug( "initial fading led to 75 % ..." );
+  print_debugnln( "initial fading led to ..." );
+  print_debugnln(ledFadeValue01);
   ledObj.fadeInToTargetValue(ledFadeValue01);
 
-  print_debugnln( "Fading value initial period: " );
-  print_debug( ledFadeValue01 );
-
-  print_debugnln( "Fading value 2nd period: " );
-  print_debug( ledFadeValue02 );
-
-  print_debugnln( "Fading value 3nd period: " );
-  print_debug( ledFadeValue03 );
+//  print_debugnln( "Fading value initial period: " );
+//  print_debug( ledFadeValue01 );
+//
+//  print_debugnln( "Fading value 2nd period: " );
+//  print_debug( ledFadeValue02 );
+//
+//  print_debugnln( "Fading value 3nd period: " );
+//  print_debug( ledFadeValue03 );
 
 //  print_debugnln( "period 1: " );
 //  print_debug( timeExpire01 );
@@ -255,94 +256,29 @@ void setup() {
 
   //
   // fading delay
-  print_debugnln( "Fading delay ms: " );
-  print_debug( delayFadingLoop );
+//  print_debugnln( "Fading delay ms: " );
+//  print_debug( delayFadingLoop );
 
   //
   // capacity sensor threshold
-  print_debugnln( "capacity sensor threshold number: " );
-  print_debug( sensorThreshold );
-  print_debug( "capacity sensor pin: A0" );
+  //print_debugnln( "capacity sensor threshold number: " );
+  //print_debug( sensorThreshold );
+  //print_debug( "capacity sensor pin: A0" );
 
   //
   // capacitor sensor
-  print_debug( "create reference values to account for the capacitance of the pad ..." );
-  sensorRef0 = ADCTouchClass::read(A0, 500);    //create reference values to account for the capacitance of the pad
+  //print_debug( "create reference values to account for the capacitance of the pad ..." );
+  //sensorRef0 = ADCTouchClass::read(A0, 500);    //create reference values to account for the capacitance of the pad
 
-  print_debugnln( "capacitance reference: " );
-  print_debug(sensorRef0);
+  //print_debugnln( "capacitance reference: " );
+  //print_debug(sensorRef0);
 
-  timeAppStart = millis();
+  //timeAppStart = millis();
 
   print_debug( "app ready ..." );
 }
 
 void loop() {
 
-    long timeLoopStart = millis();
-
-    static long timeElapsedSinceEpoch = 0;
-
-    const long timeExpire01 = 35 * 60; // 35 min
-    const long timeExpire02 = 45 * 60; // 45 min
-//    const long timeExpire03 = 45 * 60; // 45 min
-
-    //
-    // avoid counter overflow
-    if(timeElapsedSinceEpoch < timeExpire02 +100) {
-      timeElapsedSinceEpoch += 1;      
-    }
-
-//    if(timeElapsedSinceEpoch > timeExpire03) {
-//
-//        print_debug( "fade-out led to 0% and suspend forever..." );
-//        ledObj.fadeOutToTargetValue(0);
-//
-//        //
-//        // suspend forever
-//        while(1) {
-//          //
-//          // just go into long low-power mode (about 32sec.)
-//          suspendDevice(SLEEP_8S, 4 /* period(s) count */);
-//        }
-//    } else 
-    if(timeElapsedSinceEpoch > timeExpire02) {
-
-        print_debug( "fade-out led to 10 % ..." );
-        ledObj.fadeOutToTargetValue(ledFadeValue03);
-
-        int sensorValue0 = ADCTouchClass::read(A0, 100);   // read pin A0, 75 samples
-        sensorValue0 -= sensorRef0;       //remove offset
-
-        if( sensorValue0 > sensorThreshold /* button Pressed */ ) {
-          timeElapsedSinceEpoch = 0; // restart LED 
-
-          ledObj.fadeInToTargetValue(ledFadeValue01);          
-        }
-
-    } else if(timeElapsedSinceEpoch > timeExpire01) {
-
-      print_debug( "fade-out led to 35 % ..." );
-      ledObj.fadeOutToTargetValue(ledFadeValue02);
-
-      int sensorValue0 = ADCTouchClass::read(A0, 100);   // read pin A0, 75 samples
-      sensorValue0 -= sensorRef0;       //remove offset
-
-      if( sensorValue0 > sensorThreshold /* button Pressed */ ) {
-        timeElapsedSinceEpoch = 0; // restart LED 
-
-        ledObj.fadeInToTargetValue(ledFadeValue01);          
-      }
-    }
-
-    //
-    // delay for fading effect: keep into account delay to read sensor
-    // and try to delay the same time interval
-    long timeAfterAdjust = millis();
-
-    if(timeAfterAdjust - timeLoopStart < delayMainLoop ) {
-
-        long actualDelay = delayMainLoop - (timeAfterAdjust - timeLoopStart);
-        delay(actualDelay);
-    }
+  delay(1000);
 }
