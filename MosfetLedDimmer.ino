@@ -218,7 +218,8 @@ void suspendDevice(const period_t sleepPeriod, const int periodCount) {
   return ;
 }
 
-int micPowerPin = 7;
+const int micPowerPin = 7;
+const unsigned int micThreashold = 100;
 
 bool detectSound()
 {
@@ -248,9 +249,6 @@ bool detectSound()
        }
    }
  
-   // power off mic
-   //digitalWrite(micPowerPin, LOW);
-
    const unsigned int peakToPeak = signalMax - signalMin;  // max - min = peak-peak amplitude
    //double volts = (peakToPeak * 3.3) / 1024;  // convert to volts
 
@@ -261,10 +259,8 @@ bool detectSound()
    Serial.print("delta :");
    Serial.println(peakToPeak);
    Serial.println("----");
-   //Serial.println(volts);
 
-  const unsigned int deltaThreashold = 120;
-   return ( peakToPeak > deltaThreashold ? true : false );
+   return ( peakToPeak > micThreashold ? true : false );
 }
 void setup() {
 
@@ -280,13 +276,18 @@ void setup() {
   print_debug( mosfetPin );
   print_debugnln( "PMW min / max values: 0 / " );
   print_debug( pmwMaxValue );
-  print_debugnln( "initial fading led to ..." );
+  print_debugnln( "initial fading led to: " );
   print_debug(ledFadeValue01);
   ledObj.fadeInToTargetValue(ledFadeValue01);
+  print_debugnln( "fading value idle period: " );
+  print_debug( ledFadeValue03 );
 
-  print_debugnln( "mic power pin init to output ..." );
+  print_debugnln( "mic power pin :" );
   print_debug(micPowerPin);
   pinMode(micPowerPin, OUTPUT);
+  print_debugnln( "mic power threshold: " );
+  print_debug(micThreashold);
+
   
 //  print_debugnln( "Fading value initial period: " );
 //  print_debug( ledFadeValue01 );
@@ -343,11 +344,12 @@ void loop() {
 
   if(timeElapsedSinceEpoch > timeExpire01) {
 
-    print_debug( "fade-out led to 35 % ..." );
-    ledObj.fadeOutToTargetValue(ledFadeValue03);
-
     // power on mic
     digitalWrite(micPowerPin, HIGH);
+    delay(250); // wait for power up mic (around 1,5 sec.)
+
+    print_debug( "fade-out led to idle state ..." );
+    ledObj.fadeOutToTargetValue(ledFadeValue03);
 
     while( ! detectSound() ){
       delay(250);
@@ -356,7 +358,7 @@ void loop() {
     // power off mic
     digitalWrite(micPowerPin, LOW);
 
-    print_debugnln( "fading in led to ..." );
+    print_debugnln( "fading in led to " );
     print_debug(ledFadeValue01);
     ledObj.fadeInToTargetValue(ledFadeValue01);
     timeElapsedSinceEpoch = 0; // restart LED
