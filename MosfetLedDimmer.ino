@@ -351,17 +351,19 @@ void loop() {
     print_debug( "fade-out led to idle state ..." );
     ledObj.fadeOutToTargetValue(ledFadeValue03);
 
+    //
+    // after entering LED in idle state, begin loop
+    // for presence detection
     while( ! detectSound() ){
       delay(250);
     }
 
-    // power off mic
+    //
+    // presence detected: power off mic and fade-in LED
     digitalWrite(micPowerPin, LOW);
-
-    print_debugnln( "fading in led to " );
-    print_debug(ledFadeValue01);
+    print_debugnln( "fading in led to active state ..." );
     ledObj.fadeInToTargetValue(ledFadeValue01);
-    timeElapsedSinceEpoch = 0; // restart LED
+    timeElapsedSinceEpoch = 0; // restart active LED period
   }
 
   delay(1000);
