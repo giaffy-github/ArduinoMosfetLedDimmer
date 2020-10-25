@@ -218,6 +218,54 @@ void suspendDevice(const period_t sleepPeriod, const int periodCount) {
   return ;
 }
 
+int micPowerPin = 7;
+
+bool detectSound()
+{
+   // power on mic
+   //digitalWrite(micPowerPin, HIGH);
+   //delay(20); // wait for mic to turn on
+
+   unsigned long start= millis();  // Start of sample window
+   
+
+   unsigned int signalMax = 0;
+   unsigned int signalMin = 1024;
+   const int sampleWindow = 250; // Sample window width in mS (250 mS = 4Hz)
+
+   // collect data for 250 miliseconds
+   while (millis() - start < sampleWindow) {
+
+       unsigned int knock = analogRead(0);
+
+       if (knock > signalMax) {
+
+           signalMax = knock;  // save just the max levels
+
+       } else if (knock < signalMin) {
+
+           signalMin = knock;  // save just the min levels
+       }
+   }
+ 
+   // power off mic
+   //digitalWrite(micPowerPin, LOW);
+
+   const unsigned int peakToPeak = signalMax - signalMin;  // max - min = peak-peak amplitude
+   //double volts = (peakToPeak * 3.3) / 1024;  // convert to volts
+
+   Serial.print("max :");
+   Serial.println(signalMax);
+   Serial.print("min :");
+   Serial.println(signalMin);
+   Serial.print("delta :");
+   Serial.println(peakToPeak);
+   Serial.println("----");
+   //Serial.println(volts);
+
+  const unsigned int deltaThreashold = 120;
+   return ( peakToPeak > deltaThreashold ? true : false );
+}
 void setup() {
 
   //
@@ -233,9 +281,13 @@ void setup() {
   print_debugnln( "PMW min / max values: 0 / " );
   print_debug( pmwMaxValue );
   print_debugnln( "initial fading led to ..." );
-  print_debugnln(ledFadeValue01);
+  print_debug(ledFadeValue01);
   ledObj.fadeInToTargetValue(ledFadeValue01);
 
+  print_debugnln( "mic power pin init to output ..." );
+  print_debug(micPowerPin);
+  pinMode(micPowerPin, OUTPUT);
+  
 //  print_debugnln( "Fading value initial period: " );
 //  print_debug( ledFadeValue01 );
 //
@@ -279,6 +331,36 @@ void setup() {
 }
 
 void loop() {
+
+  static long timeElapsedSinceEpoch = 0;
+  const long timeExpire01 = 10; //* 60; // 35 min
+
+  //
+  // avoid counter overflow
+  if(timeElapsedSinceEpoch < timeExpire01 +1000) {
+    timeElapsedSinceEpoch += 1;      
+  }
+
+  if(timeElapsedSinceEpoch > timeExpire01) {
+
+    print_debug( "fade-out led to 35 % ..." );
+    ledObj.fadeOutToTargetValue(ledFadeValue03);
+
+    // power on mic
+    digitalWrite(micPowerPin, HIGH);
+
+    while( ! detectSound() ){
+      delay(250);
+    }
+
+    // power off mic
+    digitalWrite(micPowerPin, LOW);
+
+    print_debugnln( "fading in led to ..." );
+    print_debug(ledFadeValue01);
+    ledObj.fadeInToTargetValue(ledFadeValue01);
+    timeElapsedSinceEpoch = 0; // restart LED
+  }
 
   delay(1000);
 }
