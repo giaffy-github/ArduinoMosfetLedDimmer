@@ -8,11 +8,6 @@
 
 //
 // sleep / powerdown header
-#include "LowPower.h"
-
-//
-// capacitive sensor header
-#include "ADCTouch.h"
 
 //
 // enable debug printout
@@ -38,11 +33,13 @@
 // disable debug print
 #define print_debug( X )
 
+#define print_debugnln( X )
+
 #endif
 
 //
 // program version
-const String currVersion = "v20201005";
+const String currVersion = "v20201108";
 
 //
 // fade delay in main loop
@@ -53,20 +50,11 @@ const int delayMainLoop = 1000;   // 1000 msec (i.e. 1 sec)
 // pin layout: to mosfet gate, PWM capable pin
 const int mosfetPin = 9;
 
-//
-// pin layout: capacity sensor A0
+const int pmwMaxValue = 230;  // approx. 90% of max value
 
-//
-// capacitive sensor threshold (value greater than this trigger the state to pressed)
-const int sensorThreshold = 40;
-
-//
-//
-const int pmwMaxValue = 200;  // approx. 80% of max value
-
-const int ledFadeValue01 = (pmwMaxValue * 0.90);  // 90 %
+const int ledFadeValue01 = (pmwMaxValue * 1.00);  // 80 %
 const int ledFadeValue02 = (pmwMaxValue * 0.35);  // 35 %
-const int ledFadeValue03 = (pmwMaxValue * 0.10);  // 10 %
+const int ledFadeValue03 = (pmwMaxValue * 0.00);  // 0 %
 
 //
 // LED manager class
@@ -74,16 +62,6 @@ class Led {
 
 public:
 
-  Led() : ledCurrentValue_(0), fadeRising_(true) {
-
-    //
-    // mosfetPin: initialize as an output and write initial value
-    pinMode( mosfetPin, OUTPUT);
-    analogWrite(mosfetPin, ledCurrentValue_);
-  
-    return;
-  };
-  
   Led(const Led&) = delete;
 
   Led operator=(const Led&) = delete;
@@ -193,7 +171,7 @@ protected:
 //
 // global var
 
-Led ledObj;
+Led ledObj(0, true);
 
 int counterReading = 0;
 
@@ -201,25 +179,9 @@ int sensorRef0 = 0;     //reference values to remove offset
 
 long timeAppStart = 0;
 
-void suspendDevice(const period_t sleepPeriod, const int periodCount) {
-    //
-    // go into long low-power mode
-    print_debug( "low-power mode ..." );
-
-    for(int i = 0; i < periodCount; i++) {
-      //
-      // enter power down state with ADC and BOD module disabled
-      LowPower.powerDown(sleepPeriod, ADC_OFF, BOD_OFF);
-    }
-    delay(200);
-
-    print_debug( "resuming from low-power mode ..." );
-
-  return ;
-}
-
 const int micPowerPin = 7;
-const unsigned int micThreashold = 100;
+const int micADPin = 1;
+const unsigned int micThreashold = 180;
 
 bool detectSound()
 {
@@ -227,53 +189,39 @@ bool detectSound()
    //digitalWrite(micPowerPin, HIGH);
    //delay(20); // wait for mic to turn on
 
-  // discard first readings
-  unsigned int test = analogRead(0);
-  test = analogRead(0);
-  test = analogRead(0);
-  test = analogRead(0);
-
-  int peakCounter = 0;
+    int peakCounter = 0;
   
-for(int i = 0; i < 3; i++) {
+    unsigned int signalMax = 0;
+    unsigned int signalMin = 1024;
+    const int sampleWindow = 250; // Sample window width in mS (250 ms = 4Hz)
 
-   unsigned int signalMax = 0;
-   unsigned int signalMin = 1024;
-   const int sampleWindow = 250; // Sample window width in mS (250 mS = 4Hz)
+    // collect data for 250 miliseconds
+    unsigned long start= millis();  // Start of sample window
+    while (millis() - start < sampleWindow) {
 
-   // collect data for 250 miliseconds
-   unsigned long start= millis();  // Start of sample window
-   while (millis() - start < sampleWindow) {
+        unsigned int value = analogRead(micADPin);
 
-       unsigned int knock = analogRead(0);
+        if (value > signalMax) {
 
-       if (knock > signalMax) {
+            signalMax = value;  // save just the max levels
 
-           signalMax = knock;  // save just the max levels
+        } else if (value < signalMin) {
 
-       } else if (knock < signalMin) {
-
-           signalMin = knock;  // save just the min levels
-       }
-   }
+            signalMin = value;  // save just the min levels
+        }
+        delay(5);
+    }
  
-   const unsigned int peakToPeak = signalMax - signalMin;  // max - min = peak-peak amplitude
-   //double volts = (peakToPeak * 3.3) / 1024;  // convert to volts
+    const unsigned int peakToPeak = signalMax - signalMin;  // max - min = peak-peak amplitude
 
-   Serial.print("max :");
-   Serial.println(signalMax);
-   Serial.print("min :");
-   Serial.println(signalMin);
-   Serial.print("delta :");
-   Serial.println(peakToPeak);
-   Serial.println("----");
+//   Serial.print("delta :");
+//   Serial.println(peakToPeak);
 
-   if(peakToPeak > micThreashold) {
-    peakCounter++;
-   }
-  }
+    if(peakToPeak > micThreashold) {
+       peakCounter++;
+    }
 
-   return ( peakCounter > 1 ? true : false );
+    return ( peakCounter > 0 ? true : false );
 }
 
 void setup() {
@@ -296,51 +244,14 @@ void setup() {
   print_debugnln( "fading value idle period: " );
   print_debug( ledFadeValue03 );
 
-  print_debugnln( "mic power pin :" );
+  print_debugnln( "mic power pin:" );
   print_debug(micPowerPin);
   pinMode(micPowerPin, OUTPUT);
   print_debugnln( "mic power threshold: " );
   print_debug(micThreashold);
-
-  
-//  print_debugnln( "Fading value initial period: " );
-//  print_debug( ledFadeValue01 );
-//
-//  print_debugnln( "Fading value 2nd period: " );
-//  print_debug( ledFadeValue02 );
-//
-//  print_debugnln( "Fading value 3nd period: " );
-//  print_debug( ledFadeValue03 );
-
-//  print_debugnln( "period 1: " );
-//  print_debug( timeExpire01 );
-//
-//  print_debugnln( "period 2: " );
-//  print_debug( timeExpire02 );
-//
-//  print_debugnln( "period 3: " );
-//  print_debug( timeExpire03 );
-
-  //
-  // fading delay
-//  print_debugnln( "Fading delay ms: " );
-//  print_debug( delayFadingLoop );
-
-  //
-  // capacity sensor threshold
-  //print_debugnln( "capacity sensor threshold number: " );
-  //print_debug( sensorThreshold );
-  //print_debug( "capacity sensor pin: A0" );
-
-  //
-  // capacitor sensor
-  //print_debug( "create reference values to account for the capacitance of the pad ..." );
-  //sensorRef0 = ADCTouchClass::read(A0, 500);    //create reference values to account for the capacitance of the pad
-
-  //print_debugnln( "capacitance reference: " );
-  //print_debug(sensorRef0);
-
-  //timeAppStart = millis();
+  digitalWrite(micPowerPin, HIGH);
+  print_debugnln( "reading mic in ADC pin: " );
+  print_debug(micADPin);
 
   print_debug( "app ready ..." );
 }
@@ -349,35 +260,45 @@ void loop() {
 
   static long timeElapsedSinceEpoch = 0;
   const long timeExpire01 = 10; //* 60; // 35 min
+  static int ledNextDimValue = ledFadeValue01;
 
-  //
-  // avoid counter overflow
-  if(timeElapsedSinceEpoch < timeExpire01 +1000) {
-    timeElapsedSinceEpoch += 1;      
-  }
-
+  timeElapsedSinceEpoch += 1;
   if(timeElapsedSinceEpoch > timeExpire01) {
 
-    // power on mic
-    digitalWrite(micPowerPin, HIGH);
-    delay(250); // wait for power up mic (around 1,5 sec.)
+    timeElapsedSinceEpoch = 0; // restart active LED period
 
-    print_debug( "fade-out led to idle state ..." );
-    ledObj.fadeOutToTargetValue(ledFadeValue03);
+    // power on mic
+    //digitalWrite(micPowerPin, HIGH);
+    //delay(250); // wait for power up mic (around 1,5 sec.)
 
     //
     // after entering LED in idle state, begin loop
     // for presence detection
+    long counterToNextDim = 0; // count 1 minute to next dim
+    const long counterTarget = 4;  // (250ms x cycle => count 15 sec to next dim
     while( ! detectSound() ){
-      delay(250);
+        
+        counterToNextDim++;
+        
+        if(counterToNextDim >= counterTarget) {
+          counterToNextDim = 0;
+        
+          if(ledNextDimValue >0) {
+            print_debug( "fade-out led ..." );
+            ledNextDimValue--;
+            ledObj.fadeOutToTargetValue(ledNextDimValue);
+          }
+        }
     }
+    //
+    // presence detected: power off mic
+    // digitalWrite(micPowerPin, LOW);
 
     //
-    // presence detected: power off mic and fade-in LED
-    digitalWrite(micPowerPin, LOW);
-    print_debugnln( "fading in led to active state ..." );
+    // fade-in LED
+    print_debug( "fading in led to active state ..." );
     ledObj.fadeInToTargetValue(ledFadeValue01);
-    timeElapsedSinceEpoch = 0; // restart active LED period
+    ledNextDimValue = ledFadeValue01;
   }
 
   delay(1000);
