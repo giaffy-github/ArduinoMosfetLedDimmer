@@ -227,14 +227,22 @@ bool detectSound()
    //digitalWrite(micPowerPin, HIGH);
    //delay(20); // wait for mic to turn on
 
-   unsigned long start= millis();  // Start of sample window
-   
+  // discard first readings
+  unsigned int test = analogRead(0);
+  test = analogRead(0);
+  test = analogRead(0);
+  test = analogRead(0);
+
+  int peakCounter = 0;
+  
+for(int i = 0; i < 3; i++) {
 
    unsigned int signalMax = 0;
    unsigned int signalMin = 1024;
    const int sampleWindow = 250; // Sample window width in mS (250 mS = 4Hz)
 
    // collect data for 250 miliseconds
+   unsigned long start= millis();  // Start of sample window
    while (millis() - start < sampleWindow) {
 
        unsigned int knock = analogRead(0);
@@ -260,8 +268,14 @@ bool detectSound()
    Serial.println(peakToPeak);
    Serial.println("----");
 
-   return ( peakToPeak > micThreashold ? true : false );
+   if(peakToPeak > micThreashold) {
+    peakCounter++;
+   }
+  }
+
+   return ( peakCounter > 1 ? true : false );
 }
+
 void setup() {
 
   //
