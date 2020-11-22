@@ -171,7 +171,7 @@ protected:
 //
 // global var
 
-Led ledObj(0, true);
+Led ledObj{0, true};
 
 int counterReading = 0;
 
