@@ -39,7 +39,7 @@
 
 //
 // program version
-const String currVersion = "v20201108";
+const String currVersion = "v20201205";
 
 //
 // fade delay in main loop
@@ -52,9 +52,9 @@ const int mosfetPin = 9;
 
 const int pmwMaxValue = 230;  // approx. 90% of max value
 
-const int ledFadeValue01 = (pmwMaxValue * 1.00);  // 80 %
-const int ledFadeValue02 = (pmwMaxValue * 0.35);  // 35 %
-const int ledFadeValue03 = (pmwMaxValue * 0.00);  // 0 %
+const int ledFadeValue01 = (pmwMaxValue * 0.90);  //  90 %
+const int ledFadeValue02 = (pmwMaxValue * 0.35);  //  35 %
+const int ledFadeValue03 = (pmwMaxValue * 0.00);  //   0 %
 
 //
 // LED manager class
@@ -173,15 +173,9 @@ protected:
 
 Led ledObj{0, true};
 
-int counterReading = 0;
-
-int sensorRef0 = 0;     //reference values to remove offset
-
-long timeAppStart = 0;
-
 const int micPowerPin = 7;
 const int micADPin = 1;
-const unsigned int micThreashold = 180;
+const unsigned int micThreashold = 120;
 
 bool detectSound()
 {
@@ -214,8 +208,8 @@ bool detectSound()
  
     const unsigned int peakToPeak = signalMax - signalMin;  // max - min = peak-peak amplitude
 
-//   Serial.print("delta :");
-//   Serial.println(peakToPeak);
+   Serial.print("delta :");
+   Serial.println(peakToPeak);
 
     if(peakToPeak > micThreashold) {
        peakCounter++;
@@ -259,37 +253,31 @@ void setup() {
 void loop() {
 
   static long timeElapsedSinceEpoch = 0;
-  const long timeExpire01 = 10; //* 60; // 35 min
-  static int ledNextDimValue = ledFadeValue01;
+  const long timeExpire01 = 240; // 4 min: 1 tick per second
 
   timeElapsedSinceEpoch += 1;
   if(timeElapsedSinceEpoch > timeExpire01) {
 
     timeElapsedSinceEpoch = 0; // restart active LED period
 
+    ledObj.fadeOutToTargetValue(ledFadeValue02);
+
+    long counterToNextDim = 0;
+    const long timeExpire02 = 120 * 4;  // 4 tick per second:  cycle check should lasts 250 ms => 2 min are = 60 * 2 * 4
+
+    while(!detectSound() ){
+        
+        counterToNextDim++;
+        print_debug(counterToNextDim);
+        if(counterToNextDim >= timeExpire02) {
+          counterToNextDim=0;
+          ledObj.fadeOutToTargetValue(ledFadeValue03);
+        }
+    }
+
     // power on mic
     //digitalWrite(micPowerPin, HIGH);
     //delay(250); // wait for power up mic (around 1,5 sec.)
-
-    //
-    // after entering LED in idle state, begin loop
-    // for presence detection
-    long counterToNextDim = 0; // count 1 minute to next dim
-    const long counterTarget = 4;  // (250ms x cycle => count 15 sec to next dim
-    while( ! detectSound() ){
-        
-        counterToNextDim++;
-        
-        if(counterToNextDim >= counterTarget) {
-          counterToNextDim = 0;
-        
-          if(ledNextDimValue >0) {
-            print_debug( "fade-out led ..." );
-            ledNextDimValue--;
-            ledObj.fadeOutToTargetValue(ledNextDimValue);
-          }
-        }
-    }
     //
     // presence detected: power off mic
     // digitalWrite(micPowerPin, LOW);
@@ -298,8 +286,8 @@ void loop() {
     // fade-in LED
     print_debug( "fading in led to active state ..." );
     ledObj.fadeInToTargetValue(ledFadeValue01);
-    ledNextDimValue = ledFadeValue01;
   }
 
+  print_debug(timeElapsedSinceEpoch);
   delay(1000);
 }
